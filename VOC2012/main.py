@@ -12,6 +12,7 @@ import torchvision
 from torch.utils.data import DataLoader
 import utils.trans as trans
 import models.fcn32 as fcn32
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 import models.fcn16 as fcn16
 import models.fcn8 as fcn8
 import torchvision.transforms as transforms
@@ -23,17 +24,17 @@ from utils.misc import check_mkdir, evaluate, AverageMeter, CrossEntropyLoss2d
 
 #设置tensorboard路径
 ckpt_path = 'ckpt'
-exp_name = 'voc-fcn'
+exp_name = 'voc-fcn-1'
 # writer = SummaryWriter(os.path.join(ckpt_path, 'exp', exp_name))
 
 
 #参数设置
 parser = argparse.ArgumentParser(description="Pytorch CIFAR-X")
-parser.add_argument('--wd', type=float, default=1e-4, help='weight decay')
+parser.add_argument('--wd', type=float, default=0, help='weight decay')
 parser.add_argument('--trainBatchSize', type=int, default=1, help='input batch size for training')
 parser.add_argument('--testBatchSize', type=int, default=1, help='input batch size for testing')
 parser.add_argument('--momentum', type=float,default=0.95, help='momentum')
-parser.add_argument('--lr_patience', type=int,default=100, help='large patience denotes fixed lr')
+parser.add_argument('--lr_patience', type=int,default=10, help='large patience denotes fixed lr')
 parser.add_argument('--epochs', type=int, default=200, help='number of epochs to train (default: 10)')
 parser.add_argument('--lr', type=float, default=0.0001, help='learning rate (default: 1e-3)')
 parser.add_argument('--seed', type=int, default=117, help='random seed (default: 1)')
@@ -41,7 +42,7 @@ parser.add_argument('--trainInterval', type=int, default=30,  help='how many bat
 parser.add_argument('--testInterval', type=int, default=50,  help='how many epochs to wait before another test')
 parser.add_argument('--decreasingLR', default='80,120', help='decreasing strategy')
 parser.add_argument('--resume',default='', help='resume from checkpoint')
-parser.add_argument('--valImgSampleRate', type=float,default=0.5, help='rate')
+parser.add_argument('--valImgSampleRate', type=float,default=0.9, help='rate')
 parser.add_argument('--val_save_to_img_file', type=bool,default=True, help='save')
 args = parser.parse_args()
 
@@ -58,8 +59,8 @@ if args.cuda:
 
 #加载模型
 #net = fcn32.FCN32VGG(num_classes = num_classes)
-net = fcn16.FCN16VGG(num_classes = num_classes)
-#net = fcn32.FCN32VGG(num_classes = num_classes)
+#net = fcn16.FCN16VGG(num_classes = num_classes)
+net = fcn8.FCN8VGG(num_classes = num_classes)
 if args.cuda:
     net = net.cuda()
 
@@ -119,6 +120,8 @@ else:
 
 
 optimizer = optim.Adam(net.parameters(), lr=args.lr, weight_decay=args.wd)
+
+scheduler = ReduceLROnPlateau(optimizer, 'min', patience=args.lr_patience, min_lr=1e-10, verbose=True)
 # optimizer = optim.Adam([ {'params': [param for name, param in net.named_parameters() if name[-4:] == 'bias'],'lr': 2 * args.lr},
 # {'params': [param for name, param in net.named_parameters() if name[-4:] != 'bias'],'lr': args.lr, 'weight_decay': args.wd}],
 # betas=(args.momentum, 0.999))
@@ -157,8 +160,8 @@ def train(epoch):
         curr_iter += 1
 
         #writer.add_scalar('train_loss', train_loss.avg, curr_iter)
-        #if (i + 1) % args.trainInterval == 0:
-        print('[epoch %d], [iter %d / %d], [train loss %.5f]' % (epoch, i + 1, len(trainloader), train_loss.avg))
+        if (i + 1) % args.trainInterval == 0:
+            print('[epoch %d], [iter %d / %d], [train loss %.5f]' % (epoch, i + 1, len(trainloader), train_loss.avg))
 
 # 验证过程
 def validate (epoch):
@@ -240,6 +243,8 @@ def validate (epoch):
 
     return val_loss.avg
 
+
 for epoch in range(curr_epoch, args.epochs):
     train(epoch)
-    validate(epoch)
+    val_loss = validate(epoch)
+    scheduler.step(val_loss)
