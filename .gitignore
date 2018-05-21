@@ -4,4 +4,4 @@
 /VOC2012/data/
 /VOC2012/models/vgg16.pth
 /VOC2012/ckpt/
-
+*__pycache__*

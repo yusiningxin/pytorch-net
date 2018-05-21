@@ -73,8 +73,6 @@ def evaluate(predictions, labels, num_classes):
     hist = np.zeros((num_classes, num_classes))
     for lp, lt in zip(predictions, labels):
         hist += _fast_hist(lp.flatten(), lt.flatten(), num_classes)
-    print(hist)
-    print(np.diag(hist).sum(),hist.sum(),labels.size())
     # hist 大小为num_classes*num_classes,(i,j)表示将真实的第i类预测为第j类的个数
     acc = np.diag(hist).sum() / hist.sum()
     # 计算每一类的平均预测正确率

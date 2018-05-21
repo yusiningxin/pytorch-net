@@ -12,6 +12,8 @@ import torchvision
 from torch.utils.data import DataLoader
 import utils.trans as trans
 import models.fcn32 as fcn32
+import models.fcn16 as fcn16
+import models.fcn8 as fcn8
 import torchvision.transforms as transforms
 from utils.misc import check_mkdir, evaluate, AverageMeter, CrossEntropyLoss2d
 
@@ -39,7 +41,7 @@ parser.add_argument('--trainInterval', type=int, default=30,  help='how many bat
 parser.add_argument('--testInterval', type=int, default=50,  help='how many epochs to wait before another test')
 parser.add_argument('--decreasingLR', default='80,120', help='decreasing strategy')
 parser.add_argument('--resume',default='', help='resume from checkpoint')
-parser.add_argument('--valImgSampleRate', type=float,default=1, help='rate')
+parser.add_argument('--valImgSampleRate', type=float,default=0.5, help='rate')
 parser.add_argument('--val_save_to_img_file', type=bool,default=True, help='save')
 args = parser.parse_args()
 
@@ -55,7 +57,9 @@ if args.cuda:
 
 
 #加载模型
-net = fcn32.FCN32VGG(num_classes = num_classes)
+#net = fcn32.FCN32VGG(num_classes = num_classes)
+net = fcn16.FCN16VGG(num_classes = num_classes)
+#net = fcn32.FCN32VGG(num_classes = num_classes)
 if args.cuda:
     net = net.cuda()
 
@@ -138,8 +142,6 @@ def train(epoch):
     #每次迭代调用 _getitem_ 方法，进行transform变换。
     curr_iter = (epoch - 1) * len(trainloader)
     for i, (inputs,labels) in enumerate(trainloader):
-        if i==2:
-            break
         if args.cuda:
             inputs,labels = inputs.cuda(),labels.cuda()
         N = inputs.size(0)
@@ -165,8 +167,6 @@ def validate (epoch):
     inputs_all, labels_all, predictions_all = [], [], []
 
     for i, (inputs,labels) in enumerate(valloader):
-        if i==5:
-            break
         if args.cuda:
             inputs,labels = inputs.cuda(),labels.cuda()
         N = inputs.size(0)
