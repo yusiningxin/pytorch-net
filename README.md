@@ -27,7 +27,7 @@ Pytorch0.4
 
 ## VGG parameters
 
-[Here](https://download.pytorch.org/models/vgg16-397923af.pth) download vgg pretrained parameter and put it in the models folder
+[Here](https://download.pytorch.org/models/vgg16-397923af.pth) download vgg pretrained parameter and put it(named vgg16.pth) in the models folder
 
 
 ## Result
