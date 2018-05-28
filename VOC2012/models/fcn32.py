@@ -14,9 +14,13 @@ class FCN32VGG(nn.Module):
 
         # 需要 fine-tuning 过程，预训练出参数。
         if pretrained:
-            vgg.load_state_dict(torch.load(os.path.join('models','vgg16.pth')))
+            #vgg.load_state_dict(torch.load(os.path.join('models','vgg16.pth')))
+            vgg.load_state_dict(torch.load(os.path.join('vgg16.pth')))
 
         features, classifier = list(vgg.features.children()), list(vgg.classifier.children())
+
+        #classifier: (25088,4096) RELU Dropout (4096,4096) RELU Dropout (4096,1000)
+
         '''
         100 padding for 2 reasons:
             1) support very small input size
@@ -62,12 +66,13 @@ class FCN32VGG(nn.Module):
         x_size = x.size()
         pool5 = self.features5(x)
         score_fr = self.score_fr(pool5)
+
         upscore = self.upscore(score_fr)
+        print(score_fr.size(),upscore.size())
         return upscore[:, :, 19: (19 + x_size[2]), 19: (19 + x_size[3])].contiguous()
 
 def test():
     net = FCN32VGG(10)
     y = net(torch.randn(1,3,45,78))
-
 
 #test()

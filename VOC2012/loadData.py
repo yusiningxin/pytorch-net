@@ -85,6 +85,7 @@ class VOC(data.Dataset):
         #加载验证集
         else:
             mask = Image.open(mask_path)
+
         #进行变换
         if self.joint_transform is not None:
             img, mask = self.joint_transform(img, mask)

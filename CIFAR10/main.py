@@ -10,6 +10,8 @@ import time
 import torchvision.transforms as transforms
 from vgg import *
 from googlenet import *
+from densenet import *
+
 
 parser = argparse.ArgumentParser(description="Pytorch CIFAR-X")
 parser.add_argument('--wd', type=float, default=0.00, help='weight decay')
@@ -52,7 +54,8 @@ if args.cuda:
 
 #加载模型
 #net = VGG('VGG19')
-net = GoogLeNet()
+#net = GoogLeNet()
+net = densenet_cifar()
 if args.cuda:
     net.cuda()
 

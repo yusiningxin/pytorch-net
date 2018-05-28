@@ -78,10 +78,10 @@ def evaluate(predictions, labels, num_classes):
     # 计算每一类的平均预测正确率
     acc_cls = np.diag(hist) / hist.sum(axis=1)
     acc_cls = np.nanmean(acc_cls)
-    # 均交并比
+    # 均交并比（Intersection over Union）某类被正确分类的个数/(该类实际总个数+被分为这一类的个数-重合部分)
     iu = np.diag(hist) / ((hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist)))
     mean_iu = np.nanmean(iu)
-    # 频权交并比
+    # 频权交并比,根据每个类出现的频率为其设置权重
     freq = hist.sum(axis=1) / hist.sum()
     fwavacc = (freq[freq > 0] * iu[freq > 0]).sum()
 

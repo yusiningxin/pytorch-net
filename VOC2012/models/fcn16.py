@@ -48,6 +48,7 @@ class FCN16VGG(nn.Module):
             fc6, nn.ReLU(inplace=True), nn.Dropout(), fc7, nn.ReLU(inplace=True), nn.Dropout(), score_fr
         )
 
+        # skip layers
         self.upscore2 = nn.ConvTranspose2d(num_classes, num_classes, kernel_size=4, stride=2, bias=False)
         self.upscore16 = nn.ConvTranspose2d(num_classes, num_classes, kernel_size=32, stride=16, bias=False)
 
@@ -56,17 +57,22 @@ class FCN16VGG(nn.Module):
 
     def forward(self, x):
         x_size = x.size()
-        pool4 = self.features4(x)
-        pool5 = self.features5(pool4)
+        pool4 = self.features4(x) # pool4的channel维度为512，大小相比原来缩小了16倍
 
-        score_fr = self.score_fr(pool5)
-        # 上采样扩大两倍
+        pool5 = self.features5(pool4)
+        score_fr = self.score_fr(pool5) # score_fr 的channel维度为21，大小相比原来缩小了32倍
+
+
+        # 将score_fr上采样扩大两倍,变为缩小16倍
         upscore2 = self.upscore2(score_fr)
 
-
+        # 用1*1的卷积进行降维，channel变为21
         score_pool4 = self.score_pool4(0.01 * pool4)
+
+        #score_pool4 进行crop后和upscore2相加
         upscore16 = self.upscore16(score_pool4[:, :, 5: (5 + upscore2.size()[2]), 5: (5 + upscore2.size()[3])]
                                    + upscore2)
+                                   
         return upscore16[:, :, 27: (27 + x_size[2]), 27: (27 + x_size[3])].contiguous()
 
 def test():

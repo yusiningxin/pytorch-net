@@ -19,7 +19,7 @@ import torchvision.transforms as transforms
 from utils.misc import check_mkdir, evaluate, AverageMeter, CrossEntropyLoss2d
 
 
-# 不清楚这个的具体意思
+
 #cudnn.benchmark = True
 
 #设置tensorboard路径
@@ -36,7 +36,7 @@ parser.add_argument('--testBatchSize', type=int, default=1, help='input batch si
 parser.add_argument('--momentum', type=float,default=0.95, help='momentum')
 parser.add_argument('--lr_patience', type=int,default=10, help='large patience denotes fixed lr')
 parser.add_argument('--epochs', type=int, default=200, help='number of epochs to train (default: 10)')
-parser.add_argument('--lr', type=float, default=0.0001, help='learning rate (default: 1e-3)')
+parser.add_argument('--lr', type=float, default=0.001, help='learning rate (default: 1e-3)')
 parser.add_argument('--seed', type=int, default=117, help='random seed (default: 1)')
 parser.add_argument('--trainInterval', type=int, default=30,  help='how many batches to wait before logging training status')
 parser.add_argument('--testInterval', type=int, default=50,  help='how many epochs to wait before another test')
@@ -121,10 +121,12 @@ else:
 
 optimizer = optim.Adam(net.parameters(), lr=args.lr, weight_decay=args.wd)
 
-scheduler = ReduceLROnPlateau(optimizer, 'min', patience=args.lr_patience, min_lr=1e-10, verbose=True)
+
 # optimizer = optim.Adam([ {'params': [param for name, param in net.named_parameters() if name[-4:] == 'bias'],'lr': 2 * args.lr},
 # {'params': [param for name, param in net.named_parameters() if name[-4:] != 'bias'],'lr': args.lr, 'weight_decay': args.wd}],
 # betas=(args.momentum, 0.999))
+
+scheduler = ReduceLROnPlateau(optimizer, 'min', patience=args.lr_patience, min_lr=1e-10, verbose=True)
 
 # resume 优化器参数加载
 if len(args.resume) > 0:
@@ -160,8 +162,8 @@ def train(epoch):
         curr_iter += 1
 
         #writer.add_scalar('train_loss', train_loss.avg, curr_iter)
-        if (i + 1) % args.trainInterval == 0:
-            print('[epoch %d], [iter %d / %d], [train loss %.5f]' % (epoch, i + 1, len(trainloader), train_loss.avg))
+        #if (i + 1) % args.trainInterval == 0:
+        print('[epoch %d], [iter %d / %d], [train loss %.5f]' % (epoch, i + 1, len(trainloader), train_loss.avg))
 
 # 验证过程
 def validate (epoch):

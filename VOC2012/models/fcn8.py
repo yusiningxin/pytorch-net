@@ -64,25 +64,28 @@ class FCN8VGG(nn.Module):
 
         self.upscore2 = nn.ConvTranspose2d(num_classes, num_classes, kernel_size=4, stride=2, bias=False)
         self.upscore_pool4 = nn.ConvTranspose2d(num_classes, num_classes, kernel_size=4, stride=2, bias=False)
-
         self.upscore8 = nn.ConvTranspose2d(num_classes, num_classes, kernel_size=16, stride=8, bias=False)
+
         self.upscore2.weight.data.copy_(get_upsampling_weight(num_classes, num_classes, 4))
         self.upscore_pool4.weight.data.copy_(get_upsampling_weight(num_classes, num_classes, 4))
         self.upscore8.weight.data.copy_(get_upsampling_weight(num_classes, num_classes, 16))
 
     def forward(self, x):
         x_size = x.size()
-        pool3 = self.features3(x)
+        pool3 = self.features3(x) # channel=256，大小缩小8倍
         pool4 = self.features4(pool3)
         pool5 = self.features5(pool4)
 
         score_fr = self.score_fr(pool5)
+        # score_fr 上采样扩大两倍
         upscore2 = self.upscore2(score_fr)
 
         score_pool4 = self.score_pool4(0.01 * pool4)
+        # 相加后再上采样扩大两倍
         upscore_pool4 = self.upscore_pool4(score_pool4[:, :, 5: (5 + upscore2.size()[2]), 5: (5 + upscore2.size()[3])]
                                            + upscore2)
 
+        #1*1卷积进行降维，channel = 21
         score_pool3 = self.score_pool3(0.0001 * pool3)
         upscore8 = self.upscore8(score_pool3[:, :, 9: (9 + upscore_pool4.size()[2]), 9: (9 + upscore_pool4.size()[3])]
                                  + upscore_pool4)
